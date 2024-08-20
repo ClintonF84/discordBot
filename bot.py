@@ -70,7 +70,7 @@ async def UpdateGame(ctx, gameName: str):
     saveJson(gameToUpdate)
 
 @bot.command(name="clear")
-async def clearGames():
+async def clearGames(ctx):
     clear = {"games": []}
     saveJson(clear)
 
