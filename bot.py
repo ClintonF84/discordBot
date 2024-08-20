@@ -14,15 +14,15 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 
 
 def loadJson():
-    with open('games.json', 'r', encoding='utf-8') as f:
+    with open("games.json", "r", encoding="utf-8") as f:
         return json.load(f)
 
 def saveJson(data):
-    with open('games.json', 'w') as f:
+    with open("games.json", "w") as f:
         json.dump(data, f, indent=4) 
 
 # Load the configuration from config.json
-with open("config.json", "r", encoding='utf-8') as config_file:
+with open("config.json", "r", encoding="utf-8") as config_file:
     config = json.load(config_file)
 
 WELCOME_MESSAGE = config["welcome_message"]
@@ -57,10 +57,10 @@ async def poll(ctx):
 @bot.command(name='addGame')
 async def AddGame(ctx, gameName: str):
     data = loadJson()
-    existingGames = data['games']
-    gameObject =json.load({'name': gameName})
+    existingGames = data["games"]
+    gameObject = {"name": gameName}
     existingGames.append(gameObject)
-    saveJson(existingGames)
+    saveJson({"games": existingGames})
 
 @bot.command(name='updateGame')
 async def UpdateGame(ctx, gameName: str):
