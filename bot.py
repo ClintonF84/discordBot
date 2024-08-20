@@ -20,7 +20,7 @@ def loadJson():
 def saveJson(data):
     with open("games.json", "w") as f:
         json.dump(data, f, indent=4) 
-
+2
 # Load the configuration from config.json
 with open("config.json", "r", encoding="utf-8") as config_file:
     config = json.load(config_file)
@@ -46,7 +46,7 @@ async def on_member_join(member):
         await channel.send(WELCOME_MESSAGE.format(member=member.mention))
 
 # Command to start a poll with multiple questions
-@bot.command()
+@bot.command(name="poll")
 async def poll(ctx):
     for question in POLL_QUESTIONS:
         message = await ctx.send(f"**{question}**")
@@ -54,7 +54,7 @@ async def poll(ctx):
             await message.add_reaction(reaction)
 
 
-@bot.command(name='addGame')
+@bot.command(name="addGame")
 async def AddGame(ctx, gameName: str):
     data = loadJson()
     existingGames = data["games"]
@@ -62,13 +62,17 @@ async def AddGame(ctx, gameName: str):
     existingGames.append(gameObject)
     saveJson({"games": existingGames})
 
-@bot.command(name='updateGame')
+@bot.command(name="updateGame")
 async def UpdateGame(ctx, gameName: str):
     data = loadJson()
     gameToUpdate = data['games'].get(gameName, {})
     gameToUpdate.playedDate = datetime.today().date()
     saveJson(gameToUpdate)
 
+@bot.command(name="clear")
+async def clearGames():
+    clear = {"games": []}
+    saveJson(clear)
 
 # Run the bot
 bot.run(TOKEN)
