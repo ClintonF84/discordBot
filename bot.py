@@ -1,18 +1,27 @@
 import os
 import json
 import discord
+import datetime
 from discord.ext import commands
 from dotenv import load_dotenv
+from datetime import datetime
 
 # Load environment variables from .env file
 load_dotenv()
 
 # Get the Discord token from .env
 TOKEN = os.getenv("DISCORD_TOKEN")
-# test
-print('token ->' + TOKEN)
+
+
+def loadJson():
+    with open('games.json', 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+def saveJson(data):
+    with open('games.json', 'w') as f:
+        json.dump(data, f, indent=4) 
+
 # Load the configuration from config.json
-print("Current working directory:", os.getcwd())
 with open("config.json", "r", encoding='utf-8') as config_file:
     config = json.load(config_file)
 
@@ -43,6 +52,23 @@ async def poll(ctx):
         message = await ctx.send(f"**{question}**")
         for reaction in REACTION_OPTIONS:
             await message.add_reaction(reaction)
+
+
+@bot.command(name='addGame')
+async def AddGame(ctx, game: str):
+    data = loadJson()
+    existingGames = data['games']
+    gameObject =json.load(game)
+    existingGames.append(gameObject)
+    saveJson(existingGames)
+
+@bot.command(name='updateGame')
+async def UpdateGame(ctx, gameName: str):
+    data = loadJson()
+    gameToUpdate = data['games'].get(gameName, {})
+    gameToUpdate.playedDate = datetime.today().date()
+    saveJson(gameToUpdate)
+
 
 # Run the bot
 bot.run(TOKEN)

@@ -1,6 +1,6 @@
 {
     "welcome_message": "Welcome to the server, {member}!",
-    "welcome_channel_id": 123456789012345678,
+    "welcome_channel_id": 1274764836777103478,
     "poll_question": "<b>Poll:</b> <br />{question}<br>👍 for Yes! <br>👎 for No!",
     "games": [
         "Game 1: [How To Play](www.google.com)",
