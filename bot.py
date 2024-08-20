@@ -76,9 +76,10 @@ async def clearGames(ctx):
     clear = {"games": []}
     saveJson(clear)
 
+# this will pull latest from Main branch
 @bot.command(name="updateCode")
 async def updateCode(ctx):
     subprocess.run(["git", "pull", "origin", "main"], check=True)
-    
+
 # Run the bot
 bot.run(TOKEN)
