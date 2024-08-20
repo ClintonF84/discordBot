@@ -55,10 +55,10 @@ async def poll(ctx):
 
 
 @bot.command(name='addGame')
-async def AddGame(ctx, game: str):
+async def AddGame(ctx, gameName: str):
     data = loadJson()
     existingGames = data['games']
-    gameObject =json.load(game)
+    gameObject =json.load({'name': gameName})
     existingGames.append(gameObject)
     saveJson(existingGames)
 
