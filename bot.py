@@ -9,7 +9,7 @@ load_dotenv()
 
 # Get the Discord token from .env
 TOKEN = os.getenv("DISCORD_TOKEN")
-
+print(TOKEN)
 # Load the configuration from config.json
 with open("config.json", "r") as config_file:
     config = json.load(config_file)
