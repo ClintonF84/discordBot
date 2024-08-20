@@ -22,15 +22,36 @@ def loadJson():
 def saveJson(data):
     with open("games.json", "w") as f:
         json.dump(data, f, indent=4) 
-2
+
+def GetUnplayed4Games():
+    games = loadJson()
+    gamesArray = games["games"]
+    unplaygames = []
+
+    count = 0
+    for game in gamesArray:
+        if game.get("playedDate", "") == "":
+            unplaygames.append(game)
+            count = count + 1
+        
+        if count == 4:
+            break
+    
+
+    
+
+
+
 # Load the configuration from config.json
 with open("config.json", "r", encoding="utf-8") as config_file:
     config = json.load(config_file)
 
 WELCOME_MESSAGE = config["welcome_message"]
 WELCOME_CHANNEL_ID = config["welcome_channel_id"]
-POLL_QUESTIONS = config["games"]
 REACTION_OPTIONS = config["reaction_options"]
+gamesdata = loadJson()
+
+print(gamesdata)
 
 # Set up the bot
 intents = discord.Intents.default()  # Start with default intents
@@ -50,25 +71,27 @@ async def on_member_join(member):
 # Command to start a poll with multiple questions
 @bot.command(name="poll")
 async def poll(ctx):
-    for question in POLL_QUESTIONS:
+    for question in GetUnplayed4Games():
         message = await ctx.send(f"**{question}**")
         for reaction in REACTION_OPTIONS:
             await message.add_reaction(reaction)
 
 
 @bot.command(name="addGame")
-async def AddGame(ctx, gameName: str):
-    data = loadJson()
-    existingGames = data["games"]
-    gameObject = {"name": gameName}
+async def AddGame(ctx, gameName: str, howToLink: str):
+    existingGames = gamesdata["games"]
+    gameObject = {"name": gameName, "createdDate": datetime.today().date().isoformat(), "playedDate": "", "howToLink": howToLink}
     existingGames.append(gameObject)
+
+    print(gameObject)
+
     saveJson({"games": existingGames})
 
 @bot.command(name="updateGame")
 async def UpdateGame(ctx, gameName: str):
-    data = loadJson()
-    gameToUpdate = data['games'].get(gameName, {})
-    gameToUpdate.playedDate = datetime.today().date()
+    gameToUpdate = gamesdata['games'].get(gameName, {})
+    gameToUpdate.playedDate = datetime.today().date().isoformat()
+
     saveJson(gameToUpdate)
 
 @bot.command(name="clear")
