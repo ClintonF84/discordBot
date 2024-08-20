@@ -2,6 +2,8 @@ import os
 import json
 import discord
 import datetime
+import subprocess
+
 from discord.ext import commands
 from dotenv import load_dotenv
 from datetime import datetime
@@ -74,5 +76,9 @@ async def clearGames(ctx):
     clear = {"games": []}
     saveJson(clear)
 
+@bot.command(name="updateCode")
+async def updateCode(ctx):
+    subprocess.run(["git", "pull", "origin", "main"], check=True)
+    
 # Run the bot
 bot.run(TOKEN)
