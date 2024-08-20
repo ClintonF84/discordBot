@@ -10,9 +10,10 @@ load_dotenv()
 # Get the Discord token from .env
 TOKEN = os.getenv("DISCORD_TOKEN")
 # test
-print(TOKEN)
+print('token ->' + TOKEN)
 # Load the configuration from config.json
-with open("config.json", "r") as config_file:
+print("Current working directory:", os.getcwd())
+with open("config.json", "r", encoding='utf-8') as config_file:
     config = json.load(config_file)
 
 WELCOME_MESSAGE = config["welcome_message"]
@@ -21,8 +22,11 @@ POLL_QUESTIONS = config["games"]
 REACTION_OPTIONS = config["reaction_options"]
 
 # Set up the bot
-intents = discord.Intents.default()
-intents.members = True
+intents = discord.Intents.default()  # Start with default intents
+intents.message_content = True  # Enable message content intent if needed
+intents.members = True  # Enable guild members intent if needed
+intents.presences = True  # Enable presence intent if needed
+
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # Event to welcome new members
