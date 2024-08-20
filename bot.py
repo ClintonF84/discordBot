@@ -1,12 +1,11 @@
 import os
 import json
 import discord
-import datetime
 import subprocess
-
 from discord.ext import commands
 from dotenv import load_dotenv
 from datetime import datetime
+from game import Game  # Import the Game class
 
 # Load environment variables from .env file
 load_dotenv()
@@ -14,33 +13,28 @@ load_dotenv()
 # Get the Discord token from .env
 TOKEN = os.getenv("DISCORD_TOKEN")
 
+REACTION_OPTIONS = ['🇦', '🇧', '🇨', '🇩', '🇪', '🇫']  # Custom reactions
 
-def loadJson():
+def load_games():
     with open("games.json", "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+        return [Game(**game) for game in data["games"]]
 
-def saveJson(data):
-    with open("games.json", "w") as f:
-        json.dump(data, f, indent=4) 
+def save_games(games):
+    with open("games.json", "w", encoding="utf-8") as f:
+        json.dump({"games": [game.to_dict() for game in games]}, f, indent=4)
 
-def GetUnplayed4Games():
-    games = loadJson()
-    gamesArray = games["games"]
-    unplaygames = []
+def get_unplayed_games(limit=4):
+    games = load_games()
+    return [game for game in games if not game.played_date][:limit]
 
-    count = 0
-    for game in gamesArray:
-        if game.get("playedDate", "") == "":
-            unplaygames.append(game)
-            count = count + 1
-        
-        if count == 4:
+def update_game_votes(game_name):
+    games = load_games()
+    for game in games:
+        if game.name.lower() == game_name.lower():
+            game.vote()
             break
-    
-
-    
-
-
+    save_games(games)
 
 # Load the configuration from config.json
 with open("config.json", "r", encoding="utf-8") as config_file:
@@ -48,61 +42,68 @@ with open("config.json", "r", encoding="utf-8") as config_file:
 
 WELCOME_MESSAGE = config["welcome_message"]
 WELCOME_CHANNEL_ID = config["welcome_channel_id"]
-REACTION_OPTIONS = config["reaction_options"]
-gamesdata = loadJson()
-
-print(gamesdata)
 
 # Set up the bot
-intents = discord.Intents.default()  # Start with default intents
-intents.message_content = True  # Enable message content intent if needed
-intents.members = True  # Enable guild members intent if needed
-intents.presences = True  # Enable presence intent if needed
+intents = discord.Intents.default()
+intents.message_content = True
+intents.members = True
+intents.reactions = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Event to welcome new members
 @bot.event
 async def on_member_join(member):
     channel = bot.get_channel(WELCOME_CHANNEL_ID)
     if channel:
         await channel.send(WELCOME_MESSAGE.format(member=member.mention))
 
-# Command to start a poll with multiple questions
 @bot.command(name="poll")
 async def poll(ctx):
-    for question in GetUnplayed4Games():
-        message = await ctx.send(f"**{question}**")
-        for reaction in REACTION_OPTIONS:
-            await message.add_reaction(reaction)
+    games = get_unplayed_games(len(REACTION_OPTIONS))  # Limit options based on available reactions
+    if not games:
+        await ctx.send("No unplayed games available for voting.")
+        return
 
+    description = "\n".join([f"{REACTION_OPTIONS[idx]}: {game.name} [How To Play]({game.how_to_link})" for idx, game in enumerate(games)])
+    poll_message = await ctx.send(f"**Vote for a game by reacting:**\n{description}", suppress_embeds=True)
+
+    for idx in range(len(games)):
+        await poll_message.add_reaction(REACTION_OPTIONS[idx])
+
+@bot.event
+async def on_reaction_add(reaction, user):
+    if user.bot:
+        return
+
+    message = reaction.message
+    if not message.content.startswith("**Vote for a game by reacting:**"):
+        return
+
+    games = get_unplayed_games(len(REACTION_OPTIONS))
+    if not games:
+        return
+
+    # Map reactions to game names
+    reaction_to_game = {REACTION_OPTIONS[idx]: game.name for idx, game in enumerate(games)}
+
+    selected_game_name = reaction_to_game.get(reaction.emoji)
+    if selected_game_name:
+        update_game_votes(selected_game_name)
+        await message.channel.send(f"{user.mention} voted for {selected_game_name}!")
 
 @bot.command(name="addGame")
-async def AddGame(ctx, gameName: str, howToLink: str):
-    existingGames = gamesdata["games"]
-    gameObject = {"name": gameName, "createdDate": datetime.today().date().isoformat(), "playedDate": "", "howToLink": howToLink}
-    existingGames.append(gameObject)
-
-    print(gameObject)
-
-    saveJson({"games": existingGames})
-
-@bot.command(name="updateGame")
-async def UpdateGame(ctx, gameName: str):
-    gameToUpdate = gamesdata['games'].get(gameName, {})
-    gameToUpdate.playedDate = datetime.today().date().isoformat()
-
-    saveJson(gameToUpdate)
+async def add_game(ctx, game_name: str, how_to_link: str):
+    games = load_games()
+    new_game = Game(game_name, how_to_link)
+    games.append(new_game)
+    save_games(games)
 
 @bot.command(name="clear")
-async def clearGames(ctx):
-    clear = {"games": []}
-    saveJson(clear)
+async def clear_games(ctx):
+    save_games([])
 
-# this will pull latest from Main branch
 @bot.command(name="updateCode")
-async def updateCode(ctx):
+async def update_code(ctx):
     subprocess.run(["git", "pull", "origin", "main"], check=True)
 
-# Run the bot
 bot.run(TOKEN)
